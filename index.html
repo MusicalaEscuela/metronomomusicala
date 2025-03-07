@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Metrónomo Musicala</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+    <div class="container">
+        <img src="https://static.wixstatic.com/media/85afce_3adb3865c88a492b93a8bf2dc69049c3~mv2.png" alt="Musicala Logo" class="logo">
+        
+        <h1>Metrónomo Musicala</h1>
+
+        <div class="controls">
+            <div class="control-group">
+                <label for="bpm">BPM:</label>
+                <input type="number" id="bpm" value="120" min="40" max="240">
+            </div>
+            <div class="control-group">
+                <label for="compas">Compás:</label>
+                <select id="compas">
+                    <option value="2">2/4</option>
+                    <option value="3">3/4</option>
+                    <option value="4" selected>4/4</option>
+                    <option value="6">6/8</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="controls">
+            <div class="control-group">
+                <label for="subdivision">Subdivisión:</label>
+                <select id="subdivision">
+                    <option value="1">Cuartos</option>
+                    <option value="2">Corcheas</option>
+                    <option value="3">Tresillos</option>
+                    <option value="4">Semicorcheas</option>
+                </select>
+            </div>
+            <div class="control-group">
+                <label for="sonido">Sonido:</label>
+                <select id="sonido">
+                    <option value="click">Clic Digital</option>
+                    <option value="bombo">Bombo</option>
+                    <option value="platillo">Platillo</option>
+                    <option value="redoblante">Redoblante</option>
+                </select>
+            </div>
+        </div>
+
+        <button class="btn" onclick="toggleMetronome()">Start / Stop</button>
+
+        <div id="metronome-circle" class="metronome-circle"></div>
+
+        <p class="copyright">© 2025 Musicala. Todos los derechos reservados.</p>
+    </div>
+
+    <script src="sounds.js"></script>
+    <script src="script.js"></script>
+
+</body>
+</html>
