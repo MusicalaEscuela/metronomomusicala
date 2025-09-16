@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Metrónomo Musicala</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <div class="container">
+    <header class="header">
+      <img src="https://static.wixstatic.com/media/85afce_3adb3865c88a492b93a8bf2dc69049c3~mv2.png" alt="Musicala" class="logo" />
+      <h1>Metrónomo Musicala</h1>
+      <p class="hint">Barra espaciadora: Iniciar/Detener · Teclas ↑/↓: BPM ±1 · Mantén Shift para ±5</p>
+    </header>
+
+    <!-- Controles fila 1 -->
+    <section class="controls">
+      <div class="control-group">
+        <label for="bpm">BPM</label>
+        <div class="bpm-wrap">
+          <button class="mini-btn" id="bpmDown" aria-label="Disminuir BPM">−</button>
+          <input type="number" id="bpm" value="120" min="30" max="300" step="1" inputmode="numeric">
+          <button class="mini-btn" id="bpmUp" aria-label="Aumentar BPM">+</button>
+        </div>
+      </div>
+
+      <div class="control-group">
+        <label for="tapBtn">Tap tempo</label>
+        <button id="tapBtn" class="btn secondary" aria-label="Tap tempo">TAP</button>
+        <small id="tapAvg" class="subtext">—</small>
+      </div>
+    </section>
+
+    <!-- Controles fila 2 -->
+    <section class="controls">
+      <div class="control-group">
+        <label for="compas">Compás</label>
+        <select id="compas">
+          <option value="2">2/4</option>
+          <option value="3">3/4</option>
+          <option value="4" selected>4/4</option>
+          <option value="5">5/4</option>
+          <option value="6">6/8</option>
+        </select>
+      </div>
+
+      <div class="control-group">
+        <label for="subdivision">Subdivisión</label>
+        <select id="subdivision">
+          <option value="1">Negras</option>
+          <option value="2">Corcheas</option>
+          <option value="3">Tresillos</option>
+          <option value="4">Semicorcheas</option>
+        </select>
+      </div>
+    </section>
+
+    <!-- Controles fila 3 -->
+    <section class="controls">
+      <div class="control-group">
+        <label for="sonido">Sonido</label>
+        <select id="sonido">
+          <option value="click">Clic digital</option>
+          <option value="bombo">Bombo</option>
+          <option value="platillo">Platillo</option>
+          <option value="redoblante">Redoblante</option>
+        </select>
+      </div>
+
+      <div class="control-group">
+        <label for="volumen">Volumen</label>
+        <input type="range" id="volumen" min="0" max="1" step="0.01" value="0.8" />
+      </div>
+    </section>
+
+    <!-- Opciones (solo acento) -->
+    <section class="options">
+      <label class="chk">
+        <input type="checkbox" id="accent" checked>
+        <span>Acento en primer pulso</span>
+      </label>
+    </section>
+
+    <!-- Visual: péndulo + LEDs -->
+    <section class="visual">
+      <div class="pendulum" aria-hidden="true">
+        <div class="arm">
+          <div class="weight"></div>
+        </div>
+      </div>
+
+      <div class="beat-lights" id="beatLights" aria-label="Indicadores de pulso">
+        <!-- Se generan dinámicamente según el compás -->
+      </div>
+    </section>
+
+    <!-- Botonera principal -->
+    <section class="main-actions">
+      <button id="toggleBtn" class="btn primary">Iniciar</button>
+      <button id="resetBtn" class="btn ghost">Reiniciar</button>
+    </section>
+
+    <footer class="footer">
+      <p>© 2025 Musicala. Todos los derechos reservados.</p>
+    </footer>
+  </div>
+
+  <!-- Sonidos y lógica -->
+  <script src="sounds.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
