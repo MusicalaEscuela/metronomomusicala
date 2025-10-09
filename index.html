@@ -61,7 +61,7 @@
     <!-- Controles fila 3 -->
     <section class="controls">
       <div class="control-group">
-        <label for="sonido">Sonido</label>
+        <label for="sonido">Sonido del clic</label>
         <select id="sonido">
           <option value="click">Clic digital</option>
           <option value="bombo">Bombo</option>
@@ -76,12 +76,26 @@
       </div>
     </section>
 
-    <!-- Opciones (solo acento) -->
+    <!-- Opciones -->
     <section class="options">
       <label class="chk">
         <input type="checkbox" id="accent" checked>
-        <span>Acento en primer pulso</span>
+        <span>Acento en primer pulso (solo clic)</span>
       </label>
+    </section>
+
+    <!-- Pistas base (batería) -->
+    <section class="tracks">
+      <div class="control-group">
+        <label>Pista base (batería)</label>
+        <div class="pattern-buttons" id="patternButtons" role="group" aria-label="Pistas base">
+          <button class="pat-btn selected" data-pattern="off">Sin pista</button>
+          <button class="pat-btn" data-pattern="groove1">Groove 1 (4/4)</button>
+          <button class="pat-btn" data-pattern="groove2">Groove 2 (4/4)</button>
+          <button class="pat-btn" data-pattern="waltz34">Vals 3/4</button>
+        </div>
+        <small class="subtext" id="patternNotice">Activa una pista. El clic se silencia automáticamente.</small>
+      </div>
     </section>
 
     <!-- Visual: péndulo + LEDs -->
@@ -92,9 +106,7 @@
         </div>
       </div>
 
-      <div class="beat-lights" id="beatLights" aria-label="Indicadores de pulso">
-        <!-- Se generan dinámicamente según el compás -->
-      </div>
+      <div class="beat-lights" id="beatLights" aria-label="Indicadores de pulso"></div>
     </section>
 
     <!-- Botonera principal -->
