@@ -1,127 +1,143 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" data-theme="dark">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Metrónomo Musicala</title>
-  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+  <meta name="description" content="Metrónomo profesional – Musicala Escuela de Artes">
+  <meta name="theme-color" content="#080c14">
+  <!-- Evita flash de tema incorrecto al cargar -->
+  <script>const _st=localStorage.getItem('metro-theme');if(_st)document.documentElement.setAttribute('data-theme',_st);</script>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+<div class="app" id="app">
+  <div class="flash-overlay" id="flashOverlay"></div>
+  <div class="countin-display" id="countinDisplay">1</div>
 
-  <div class="container">
-    <header class="header">
-      <img src="https://static.wixstatic.com/media/85afce_3adb3865c88a492b93a8bf2dc69049c3~mv2.png" alt="Musicala" class="logo" />
-      <h1>Metrónomo Musicala</h1>
-      <p class="hint">Barra espaciadora: Iniciar/Detener · Teclas ↑/↓: BPM ±1 · Mantén Shift para ±5</p>
-    </header>
+  <!-- Header -->
+  <header class="header">
+    <div class="header-left">
+      <img src="https://static.wixstatic.com/media/85afce_3adb3865c88a492b93a8bf2dc69049c3~mv2.png"
+           alt="Musicala" class="logo" onerror="this.style.display='none'">
+      <div class="title-wrap">
+        <h1>Metrónomo</h1>
+        <span class="sub">Musicala</span>
+      </div>
+    </div>
+    <button class="theme-toggle" id="themeToggle" title="Cambiar tema" aria-label="Cambiar tema">☀️</button>
+  </header>
 
-    <!-- Controles fila 1 -->
-    <section class="controls">
-      <div class="control-group">
-        <label for="bpm">BPM</label>
-        <div class="bpm-wrap">
-          <button class="mini-btn" id="bpmDown" aria-label="Disminuir BPM">−</button>
-          <input type="number" id="bpm" value="120" min="30" max="300" step="1" inputmode="numeric">
-          <button class="mini-btn" id="bpmUp" aria-label="Aumentar BPM">+</button>
+  <!-- BPM -->
+  <section class="bpm-section" aria-label="Control de tempo">
+    <div class="bpm-row">
+      <button class="bpm-btn" id="bpmDown" aria-label="Disminuir BPM">−</button>
+      <div class="bpm-center">
+        <div class="bpm-number-row">
+          <input type="number" id="bpm" value="120" min="30" max="300" inputmode="numeric" aria-label="Valor de BPM">
+          <span class="bpm-unit">BPM</span>
         </div>
+        <span class="tempo-name" id="tempoName">Allegro</span>
       </div>
+      <button class="bpm-btn" id="bpmUp" aria-label="Aumentar BPM">+</button>
+    </div>
+    <div class="bpm-slider-wrap">
+      <input type="range" id="bpmSlider" min="30" max="300" value="120" aria-label="Slider de BPM">
+    </div>
+    <div class="tap-row">
+      <button id="tapBtn" class="tap-btn" aria-label="Tap tempo">TAP</button>
+      <span id="tapAvg">Toca para calcular el BPM</span>
+    </div>
+  </section>
 
-      <div class="control-group">
-        <label for="tapBtn">Tap tempo</label>
-        <button id="tapBtn" class="btn secondary" aria-label="Tap tempo">TAP</button>
-        <small id="tapAvg" class="subtext">—</small>
+  <!-- Controls -->
+  <section class="controls" aria-label="Opciones de reproducción">
+    <div class="cg">
+      <label for="compas">Compás</label>
+      <select id="compas">
+        <option value="2">2/4</option>
+        <option value="3">3/4</option>
+        <option value="4" selected>4/4</option>
+        <option value="5">5/4</option>
+        <option value="6">6/8</option>
+      </select>
+    </div>
+    <div class="cg">
+      <label for="subdivision">Subdivisión</label>
+      <select id="subdivision">
+        <option value="1">Negras ♩</option>
+        <option value="2">Corcheas ♪</option>
+        <option value="3">Tresillos ♪³</option>
+        <option value="4">Semicorcheas ♬</option>
+      </select>
+    </div>
+    <div class="cg">
+      <label for="sonido">Sonido clic</label>
+      <select id="sonido">
+        <option value="click">Clic digital</option>
+        <option value="madera">Madera (clave)</option>
+        <option value="bombo">Bombo</option>
+        <option value="platillo">Platillo (HH)</option>
+        <option value="redoblante">Redoblante</option>
+      </select>
+    </div>
+    <div class="cg">
+      <label for="volumen">Volumen</label>
+      <input type="range" id="volumen" min="0" max="1" step="0.01" value="0.8" aria-label="Volumen">
+    </div>
+  </section>
+
+  <!-- Options -->
+  <section class="options" aria-label="Opciones adicionales">
+    <label class="chk">
+      <input type="checkbox" id="accent" checked> Acento en tiempo 1
+    </label>
+    <label class="chk">
+      <input type="checkbox" id="countInChk"> Count-in (1 compás)
+    </label>
+    <label class="chk">
+      <input type="checkbox" id="flashChk" checked> Flash en tiempo 1
+    </label>
+  </section>
+
+  <!-- Grooves -->
+  <section class="tracks" aria-label="Pistas de batería">
+    <span class="sec-label">Pista de batería</span>
+    <div class="pat-buttons" id="patternButtons" role="group" aria-label="Seleccionar patrón">
+      <button class="pat-btn sel" data-pattern="off">Sin pista</button>
+      <button class="pat-btn" data-pattern="groove1">Groove 4/4</button>
+      <button class="pat-btn" data-pattern="funk">Funk 4/4</button>
+      <button class="pat-btn" data-pattern="rock">Rock 4/4</button>
+      <button class="pat-btn" data-pattern="bossa">Bossa 4/4</button>
+      <button class="pat-btn" data-pattern="waltz34">Vals 3/4</button>
+    </div>
+    <p class="subtext" id="patternNotice">Pista apagada.</p>
+  </section>
+
+  <!-- Visual -->
+  <section class="visual" aria-label="Visualización del metrónomo">
+    <div class="pendulum" aria-hidden="true">
+      <div class="arm" id="pendulumArm">
+        <div class="weight"></div>
       </div>
-    </section>
+    </div>
+    <div class="beat-lights" id="beatLights" aria-label="Indicadores de pulso" role="status"></div>
+  </section>
 
-    <!-- Controles fila 2 -->
-    <section class="controls">
-      <div class="control-group">
-        <label for="compas">Compás</label>
-        <select id="compas">
-          <option value="2">2/4</option>
-          <option value="3">3/4</option>
-          <option value="4" selected>4/4</option>
-          <option value="5">5/4</option>
-          <option value="6">6/8</option>
-        </select>
-      </div>
+  <!-- Main Actions -->
+  <section class="main-actions">
+    <button id="toggleBtn" class="btn primary" aria-label="Iniciar o detener el metrónomo">▶ Iniciar</button>
+    <button id="resetBtn" class="btn ghost" title="Reiniciar">↺</button>
+  </section>
 
-      <div class="control-group">
-        <label for="subdivision">Subdivisión</label>
-        <select id="subdivision">
-          <option value="1">Negras</option>
-          <option value="2">Corcheas</option>
-          <option value="3">Tresillos</option>
-          <option value="4">Semicorcheas</option>
-        </select>
-      </div>
-    </section>
+  <p class="hints">Espacio: Iniciar/Detener · ↑↓: BPM ±1 · Shift+↑↓: ±5 · T: Tap</p>
 
-    <!-- Controles fila 3 -->
-    <section class="controls">
-      <div class="control-group">
-        <label for="sonido">Sonido del clic</label>
-        <select id="sonido">
-          <option value="click">Clic digital</option>
-          <option value="bombo">Bombo</option>
-          <option value="platillo">Platillo</option>
-          <option value="redoblante">Redoblante</option>
-        </select>
-      </div>
+  <footer>
+    <p>© 2025 Musicala · Todos los derechos reservados</p>
+  </footer>
+</div>
 
-      <div class="control-group">
-        <label for="volumen">Volumen</label>
-        <input type="range" id="volumen" min="0" max="1" step="0.01" value="0.8" />
-      </div>
-    </section>
-
-    <!-- Opciones -->
-    <section class="options">
-      <label class="chk">
-        <input type="checkbox" id="accent" checked>
-        <span>Acento en primer pulso (solo clic)</span>
-      </label>
-    </section>
-
-    <!-- Pistas base (batería) -->
-    <section class="tracks">
-      <div class="control-group">
-        <label>Pista base (batería)</label>
-        <div class="pattern-buttons" id="patternButtons" role="group" aria-label="Pistas base">
-          <button class="pat-btn selected" data-pattern="off">Sin pista</button>
-          <button class="pat-btn" data-pattern="groove1">Groove 1 (4/4)</button>
-          <button class="pat-btn" data-pattern="groove2">Groove 2 (4/4)</button>
-          <button class="pat-btn" data-pattern="waltz34">Vals 3/4</button>
-        </div>
-        <small class="subtext" id="patternNotice">Activa una pista. El clic se silencia automáticamente.</small>
-      </div>
-    </section>
-
-    <!-- Visual: péndulo + LEDs -->
-    <section class="visual">
-      <div class="pendulum" aria-hidden="true">
-        <div class="arm">
-          <div class="weight"></div>
-        </div>
-      </div>
-
-      <div class="beat-lights" id="beatLights" aria-label="Indicadores de pulso"></div>
-    </section>
-
-    <!-- Botonera principal -->
-    <section class="main-actions">
-      <button id="toggleBtn" class="btn primary">Iniciar</button>
-      <button id="resetBtn" class="btn ghost">Reiniciar</button>
-    </section>
-
-    <footer class="footer">
-      <p>© 2025 Musicala. Todos los derechos reservados.</p>
-    </footer>
-  </div>
-
-  <!-- Sonidos y lógica -->
-  <script src="sounds.js"></script>
-  <script src="script.js"></script>
+<script src="script.js"></script>
 </body>
 </html>
