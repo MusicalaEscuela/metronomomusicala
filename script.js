@@ -62,7 +62,7 @@ const $themeToggle   = document.getElementById('themeToggle');
 // Utils
 // ──────────────────────────────────────────────
 const clamp  = (n, a, b) => Math.max(a, Math.min(b, n));
-const getBPM = () => clamp(parseInt($bpm.value) || 120, 30, 300);
+const getBPM = () => clamp(parseInt($bpm.value) || 120, 30, 400);
 const getVol = () => parseFloat($volumen.value) || 0.8;
 
 // ──────────────────────────────────────────────
@@ -533,7 +533,7 @@ function handleTap() {
     const ints = [];
     for (let i = 1; i < tapTimes.length; i++) ints.push(tapTimes[i] - tapTimes[i-1]);
     const avg  = ints.reduce((a, b) => a + b, 0) / ints.length;
-    const calc = clamp(Math.round(60000 / avg), 30, 300);
+    const calc = clamp(Math.round(60000 / avg), 30, 400);
     $bpm.value       = String(calc);
     $bpmSlider.value = String(calc);
     $tapAvg.textContent = `≈ ${calc} BPM`;
@@ -564,18 +564,18 @@ $resetBtn.addEventListener('click', resetAll);
 $themeToggle.addEventListener('click', toggleTheme);
 
 $bpmUp.addEventListener('click', () => {
-  $bpm.value = String(clamp(getBPM() + 1, 30, 300));
+  $bpm.value = String(clamp(getBPM() + 1, 30, 400));
   onBPMChanged();
 });
 $bpmDown.addEventListener('click', () => {
-  $bpm.value = String(clamp(getBPM() - 1, 30, 300));
+  $bpm.value = String(clamp(getBPM() - 1, 30, 400));
   onBPMChanged();
 });
 
 // BPM input
 $bpm.addEventListener('input', () => {
   const raw = parseInt($bpm.value) || 30;
-  const v   = clamp(raw, 30, 300);
+  const v   = clamp(raw, 30, 400);
   $bpmSlider.value = String(v);
   $tempoName.textContent = getTempoName(v);
   setPendulumSpeed();
@@ -623,12 +623,12 @@ window.addEventListener('keydown', e => {
   } else if (e.code === 'ArrowUp') {
     e.preventDefault();
     const d = e.shiftKey ? 5 : 1;
-    $bpm.value = String(clamp(getBPM() + d, 30, 300));
+    $bpm.value = String(clamp(getBPM() + d, 30, 400));
     onBPMChanged();
   } else if (e.code === 'ArrowDown') {
     e.preventDefault();
     const d = e.shiftKey ? 5 : 1;
-    $bpm.value = String(clamp(getBPM() - d, 30, 300));
+    $bpm.value = String(clamp(getBPM() - d, 30, 400));
     onBPMChanged();
   } else if (e.code === 'KeyT' && !inNumber) {
     handleTap();
