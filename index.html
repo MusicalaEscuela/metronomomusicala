@@ -6,6 +6,9 @@
   <title>Metrónomo Musicala</title>
   <meta name="description" content="Metrónomo profesional – Musicala Escuela de Artes">
   <meta name="theme-color" content="#080c14">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icon.svg">
   <!-- Evita flash de tema incorrecto al cargar -->
   <script>const _st=localStorage.getItem('metro-theme');if(_st)document.documentElement.setAttribute('data-theme',_st);</script>
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
@@ -15,6 +18,7 @@
 <div class="app" id="app">
   <div class="flash-overlay" id="flashOverlay"></div>
   <div class="countin-display" id="countinDisplay">1</div>
+  <p class="sr-only" id="srStatus" role="status" aria-live="polite"></p>
 
   <!-- Header -->
   <header class="header">
@@ -36,7 +40,7 @@
       <div class="bpm-center">
         <div class="bpm-number-row">
           <input type="number" id="bpm" value="120" min="30" max="400" inputmode="numeric" aria-label="Valor de BPM">
-          <span class="bpm-unit">BPM</span>
+          <span class="bpm-unit">BPM <b id="bpmUnitHint" title="Figura a la que se refiere el BPM">♩</b></span>
         </div>
         <span class="tempo-name" id="tempoName">Allegro</span>
       </div>
@@ -56,21 +60,31 @@
     <div class="cg">
       <label for="compas">Compás</label>
       <select id="compas">
-        <option value="2">2/4</option>
-        <option value="3">3/4</option>
-        <option value="4" selected>4/4</option>
-        <option value="5">5/4</option>
-        <option value="6">6/8</option>
+        <optgroup label="Simples">
+          <option value="2/4">2/4</option>
+          <option value="3/4">3/4</option>
+          <option value="4/4" selected>4/4</option>
+          <option value="5/4">5/4</option>
+        </optgroup>
+        <optgroup label="Compuestos">
+          <option value="6/8">6/8</option>
+          <option value="9/8">9/8</option>
+          <option value="12/8">12/8</option>
+        </optgroup>
+        <optgroup label="Irregulares">
+          <option value="5/8">5/8</option>
+          <option value="7/8">7/8</option>
+          <option value="8/8">8/8</option>
+        </optgroup>
       </select>
+    </div>
+    <div class="cg" id="groupingWrap" hidden>
+      <label for="grouping">Agrupación</label>
+      <select id="grouping"></select>
     </div>
     <div class="cg">
       <label for="subdivision">Subdivisión</label>
-      <select id="subdivision">
-        <option value="1">Negras ♩</option>
-        <option value="2">Corcheas ♪</option>
-        <option value="3">Tresillos ♪³</option>
-        <option value="4">Semicorcheas ♬</option>
-      </select>
+      <select id="subdivision"></select>
     </div>
     <div class="cg">
       <label for="sonido">Sonido clic</label>
@@ -91,14 +105,63 @@
   <!-- Options -->
   <section class="options" aria-label="Opciones adicionales">
     <label class="chk">
-      <input type="checkbox" id="accent" checked> Acento en tiempo 1
-    </label>
-    <label class="chk">
-      <input type="checkbox" id="countInChk"> Count-in (1 compás)
+      <input type="checkbox" id="countInChk"> Count-in
+      <input type="number" id="countInBars" value="1" min="1" max="4" class="mini" aria-label="Compases de count-in"> compás(es)
     </label>
     <label class="chk">
       <input type="checkbox" id="flashChk" checked> Flash en tiempo 1
     </label>
+    <label class="chk">
+      <input type="checkbox" id="samplesChk" checked> Samples de batería
+    </label>
+  </section>
+
+  <!-- Acentos -->
+  <section class="accents" aria-label="Acentos por pulso">
+    <span class="sec-label">Acentos <span class="sec-hint">clic para alternar fuerte · normal · silencio</span></span>
+    <div class="acc-grid" id="accentGrid" role="group" aria-label="Rejilla de acentos"></div>
+  </section>
+
+  <!-- Práctica -->
+  <section class="practice" aria-label="Herramientas de práctica">
+    <span class="sec-label">Práctica</span>
+
+    <div class="prow">
+      <label class="chk">
+        <input type="checkbox" id="gapChk"> Gap click
+      </label>
+      <span class="pfields">
+        suenan <input type="number" id="gapPlay" value="2" min="1" max="32" class="mini" aria-label="Compases que suenan">
+        · callan <input type="number" id="gapMute" value="2" min="0" max="32" class="mini" aria-label="Compases en silencio">
+      </span>
+    </div>
+
+    <div class="prow">
+      <label class="chk">
+        <input type="checkbox" id="rampChk"> Tempo progresivo
+      </label>
+      <span class="pfields">
+        cada <input type="number" id="rampBars" value="4" min="1" max="64" class="mini" aria-label="Cada cuántos compases">
+        · +<input type="number" id="rampAmount" value="4" min="1" max="40" class="mini" aria-label="BPM a sumar"> BPM
+        · hasta <input type="number" id="rampMax" value="180" min="30" max="400" class="mini" aria-label="BPM máximo">
+      </span>
+    </div>
+
+    <p class="subtext">El gap click mantiene la cuenta en silencio: es el mejor test de estabilidad rítmica.</p>
+  </section>
+
+  <!-- Presets -->
+  <section class="presets" aria-label="Presets guardados">
+    <span class="sec-label">Presets</span>
+    <div class="prow">
+      <input type="text" id="presetName" placeholder="Nombre del preset" class="ptext" aria-label="Nombre del preset">
+      <button id="presetSave" class="mini-btn">Guardar</button>
+    </div>
+    <div class="prow">
+      <select id="presetList" aria-label="Presets guardados"></select>
+      <button id="presetLoad" class="mini-btn">Cargar</button>
+      <button id="presetDel" class="mini-btn danger">Borrar</button>
+    </div>
   </section>
 
   <!-- Grooves -->
@@ -111,6 +174,10 @@
       <button class="pat-btn" data-pattern="rock">Rock 4/4</button>
       <button class="pat-btn" data-pattern="bossa">Bossa 4/4</button>
       <button class="pat-btn" data-pattern="waltz34">Vals 3/4</button>
+      <button class="pat-btn" data-pattern="balada68">Balada 6/8</button>
+      <button class="pat-btn" data-pattern="rockhanon">Rock Hanon 12/8</button>
+      <button class="pat-btn" data-pattern="shuffle12">Shuffle 12/8</button>
+      <button class="pat-btn" data-pattern="odd78">Impar 7/8</button>
     </div>
     <p class="subtext" id="patternNotice">Pista apagada.</p>
   </section>
@@ -122,7 +189,10 @@
         <div class="weight"></div>
       </div>
     </div>
-    <div class="beat-lights" id="beatLights" aria-label="Indicadores de pulso" role="status"></div>
+    <div class="lights-wrap">
+      <div class="beat-lights" id="beatLights" aria-label="Indicadores de pulso" role="group"></div>
+      <div class="bar-counter">compás <b id="barCounter">–</b></div>
+    </div>
   </section>
 
   <!-- Main Actions -->
@@ -139,5 +209,6 @@
 </div>
 
 <script src="script.js"></script>
+<script src="sounds.js"></script>
 </body>
 </html>

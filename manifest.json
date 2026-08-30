@@ -1,0 +1,16 @@
+{
+  "name": "Metrónomo Musicala",
+  "short_name": "Metrónomo",
+  "description": "Metrónomo profesional con compases simples, compuestos e irregulares — Musicala Escuela de Artes",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#080c14",
+  "theme_color": "#080c14",
+  "lang": "es",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "maskable" }
+  ]
+}
