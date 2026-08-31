@@ -637,7 +637,7 @@ footer {
   #bpm { font-size: 42px; }
 }
 /* ============================================================
-   v3 — acentos, práctica, presets, accesibilidad
+   v3 — acentos, práctica, pantalla completa, accesibilidad
    ============================================================ */
 
 /* Solo para lectores de pantalla */
@@ -698,7 +698,7 @@ footer {
 }
 
 /* ---------- Práctica ---------- */
-.practice, .presets { margin-bottom: 14px; }
+.practice { margin-bottom: 14px; }
 .prow {
   display: flex;
   flex-wrap: wrap;
@@ -723,41 +723,6 @@ input.mini {
   text-align: center;
 }
 input.mini:focus { outline: none; border-color: var(--brand); }
-
-/* ---------- Presets ---------- */
-.ptext {
-  flex: 1 1 160px;
-  padding: 8px 10px;
-  background: var(--surface2);
-  border: 1px solid var(--border2);
-  border-radius: 9px;
-  color: var(--text);
-  font-size: 13px;
-}
-.ptext:focus { outline: none; border-color: var(--brand); }
-#presetList {
-  flex: 1 1 160px;
-  padding: 8px 10px;
-  background: var(--surface2);
-  border: 1px solid var(--border2);
-  border-radius: 9px;
-  color: var(--text);
-  font-size: 13px;
-}
-.mini-btn {
-  padding: 8px 14px;
-  border-radius: 9px;
-  border: 1px solid var(--border2);
-  background: var(--surface2);
-  color: var(--text-mid);
-  font-size: 12px; font-weight: 500;
-  cursor: pointer;
-  transition: border-color .15s, color .15s, transform .1s;
-}
-.mini-btn:hover:not(:disabled)  { border-color: var(--brand); color: var(--text); }
-.mini-btn:active:not(:disabled) { transform: scale(.96); }
-.mini-btn:disabled { opacity: .4; cursor: not-allowed; }
-.mini-btn.danger:hover:not(:disabled) { border-color: var(--red); color: var(--red); }
 
 /* ---------- Contador de compases ---------- */
 .lights-wrap { display: grid; gap: 8px; }
@@ -802,3 +767,168 @@ input.mini:focus { outline: none; border-color: var(--brand); }
 
 /* El atributo hidden debe ganar a los display de las clases (.cg es flex) */
 [hidden] { display: none !important; }
+
+/* ============================================================
+   Modo pantalla completa — el número del pulso, en grande
+   ============================================================ */
+.fs-mode {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: var(--bg);
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  gap: 12px;
+  padding: 18px clamp(14px, 4vw, 40px) 22px;
+  user-select: none;
+}
+[data-theme="dark"] .fs-mode {
+  background:
+    radial-gradient(ellipse 70% 50% at 50% -10%, rgba(59,130,246,.10) 0%, transparent 65%),
+    radial-gradient(ellipse 60% 50% at 50% 110%, rgba(139,92,246,.09) 0%, transparent 65%),
+    var(--bg);
+}
+
+/* ---- Barra superior ---- */
+.fs-top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.fs-chip {
+  padding: 7px 14px;
+  border-radius: 999px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  color: var(--text-mid);
+  font-family: 'Roboto Mono', monospace;
+  font-size: clamp(12px, 1.6vw, 16px);
+  letter-spacing: .04em;
+  white-space: nowrap;
+}
+#fsMeter {
+  color: var(--text);
+  border-color: var(--border2);
+  font-weight: 700;
+}
+.fs-x {
+  margin-left: auto;
+  width: 44px; height: 44px;
+  border-radius: 12px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  color: var(--text-mid);
+  font-size: 20px;
+  cursor: pointer;
+  transition: border-color .15s, color .15s, transform .1s;
+}
+.fs-x:hover  { border-color: var(--red); color: var(--red); }
+.fs-x:active { transform: scale(.92); }
+
+/* ---- Escenario: el número ---- */
+.fs-stage {
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: clamp(14px, 4vh, 40px);
+  min-height: 0;
+}
+.fs-number {
+  font-family: 'Roboto Mono', monospace;
+  font-weight: 700;
+  font-size: min(58vh, 46vw);
+  line-height: .9;
+  color: var(--text-dim);
+  transition: color .08s;
+  font-variant-numeric: tabular-nums;
+}
+.fs-number.lvl1 { color: var(--accent); }
+.fs-number.lvl2 { color: var(--brand); }
+.fs-number.lvl0 { color: var(--text-dim); opacity: .35; }
+.fs-number.countin { color: var(--pulse); }
+
+/* Golpe: un pop corto al caer el pulso */
+.fs-number.hit          { animation: fsPop .16s ease-out; }
+.fs-number.hit.lvl2     { animation: fsPopStrong .2s ease-out; }
+@keyframes fsPop {
+  0%   { transform: scale(1.14); }
+  100% { transform: scale(1); }
+}
+@keyframes fsPopStrong {
+  0%   { transform: scale(1.24); text-shadow: 0 0 60px var(--brand-glow); }
+  100% { transform: scale(1); text-shadow: none; }
+}
+
+/* ---- Puntos de pulso ---- */
+.fs-dots {
+  display: flex;
+  gap: clamp(8px, 1.6vw, 18px);
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.fs-dot {
+  width: clamp(14px, 2.4vw, 26px);
+  height: clamp(14px, 2.4vw, 26px);
+  border-radius: 50%;
+  background: var(--surface3);
+  border: 2px solid var(--border2);
+  transition: transform .1s, background .1s, box-shadow .1s, border-color .1s;
+}
+.fs-dot.wide { width: clamp(24px, 4vw, 42px); border-radius: 999px; }
+.fs-dot.lvl2 { border-color: var(--brand); }
+.fs-dot.lvl0 { border-style: dashed; opacity: .45; }
+.fs-dot.on {
+  background: var(--accent);
+  border-color: var(--accent);
+  transform: scale(1.3);
+  box-shadow: 0 0 0 5px var(--accent-glow), 0 0 22px var(--accent-glow);
+}
+.fs-dot.on.lvl2 {
+  background: var(--brand);
+  border-color: var(--brand);
+  box-shadow: 0 0 0 5px var(--brand-glow), 0 0 26px var(--brand-glow);
+}
+
+/* ---- Barra inferior ---- */
+.fs-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+.fs-bottom .btn { min-width: 190px; font-size: 16px; }
+.fs-bar {
+  font-size: 13px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+.fs-bar b {
+  font-family: 'Roboto Mono', monospace;
+  font-size: 20px;
+  color: var(--text-mid);
+}
+
+/* Compás silenciado por el gap click */
+.fs-mode.muted-bar .fs-number { opacity: .22; }
+.fs-mode.muted-bar .fs-bar::after {
+  content: " · silencio";
+  color: var(--warn);
+}
+
+/* En horizontal y con poca altura, el número manda */
+@media (max-height: 420px) {
+  .fs-number { font-size: min(52vh, 40vw); }
+  .fs-top, .fs-bottom { gap: 8px; }
+  .fs-bottom .btn { min-width: 140px; padding: 10px 16px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fs-number.hit, .fs-number.hit.lvl2 { animation: none; }
+}
+
+/* Sin scroll de fondo mientras el modo pantalla completa está abierto */
+html.fs-open, html.fs-open body { overflow: hidden; }

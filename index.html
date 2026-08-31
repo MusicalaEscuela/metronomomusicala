@@ -150,20 +150,6 @@
     <p class="subtext">El gap click mantiene la cuenta en silencio: es el mejor test de estabilidad rítmica.</p>
   </section>
 
-  <!-- Presets -->
-  <section class="presets" aria-label="Presets guardados">
-    <span class="sec-label">Presets</span>
-    <div class="prow">
-      <input type="text" id="presetName" placeholder="Nombre del preset" class="ptext" aria-label="Nombre del preset">
-      <button id="presetSave" class="mini-btn">Guardar</button>
-    </div>
-    <div class="prow">
-      <select id="presetList" aria-label="Presets guardados"></select>
-      <button id="presetLoad" class="mini-btn">Cargar</button>
-      <button id="presetDel" class="mini-btn danger">Borrar</button>
-    </div>
-  </section>
-
   <!-- Grooves -->
   <section class="tracks" aria-label="Pistas de batería">
     <span class="sec-label">Pista de batería</span>
@@ -198,14 +184,37 @@
   <!-- Main Actions -->
   <section class="main-actions">
     <button id="toggleBtn" class="btn primary" aria-label="Iniciar o detener el metrónomo">▶ Iniciar</button>
+    <button id="fsBtn" class="btn ghost" title="Modo pantalla completa"
+            aria-label="Abrir modo pantalla completa">⛶</button>
     <button id="resetBtn" class="btn ghost" title="Reiniciar">↺</button>
   </section>
 
-  <p class="hints">Espacio: Iniciar/Detener · ↑↓: BPM ±1 · Shift+↑↓: ±5 · T: Tap</p>
+  <p class="hints">Espacio: Iniciar/Detener · ↑↓: BPM ±1 · Shift+↑↓: ±5 · T: Tap · F: Pantalla completa</p>
 
   <footer>
     <p>© 2025 Musicala · Todos los derechos reservados</p>
   </footer>
+</div>
+
+<!-- Modo pantalla completa: el número del pulso, en grande -->
+<div class="fs-mode" id="fsMode" hidden role="dialog" aria-modal="true"
+     aria-label="Modo pantalla completa">
+  <div class="fs-top">
+    <span class="fs-chip" id="fsMeter">4/4</span>
+    <span class="fs-chip" id="fsBpm">120 BPM</span>
+    <span class="fs-chip" id="fsTempo">Moderato</span>
+    <button class="fs-x" id="fsExit" aria-label="Salir de pantalla completa">✕</button>
+  </div>
+
+  <div class="fs-stage">
+    <div class="fs-number lvl0" id="fsNumber">1</div>
+    <div class="fs-dots" id="fsDots" aria-hidden="true"></div>
+  </div>
+
+  <div class="fs-bottom">
+    <button class="btn primary" id="fsToggle">▶ Iniciar</button>
+    <span class="fs-bar">compás <b id="fsBar">–</b></span>
+  </div>
 </div>
 
 <script src="script.js"></script>

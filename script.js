@@ -2,7 +2,7 @@
    Metrónomo Musicala — script.js v3
    · Compases simples, compuestos e irregulares con agrupación
    · Rejilla de acentos por pulso (fuerte / normal / silencio)
-   · Gap click · Tempo progresivo · Presets · Samples + síntesis
+   · Gap click · Tempo progresivo · Pantalla completa · Samples + síntesis
    · Scheduler con Worker (preciso en segundo plano)
    · Péndulo dibujado con rAF sobre el reloj de audio
    ============================================================ */
@@ -94,12 +94,17 @@ const $rampBars    = $('rampBars');
 const $rampAmount  = $('rampAmount');
 const $rampMax     = $('rampMax');
 
-// Presets
-const $presetName  = $('presetName');
-const $presetSave  = $('presetSave');
-const $presetList  = $('presetList');
-const $presetLoad  = $('presetLoad');
-const $presetDel   = $('presetDel');
+// Pantalla completa
+const $fsMode   = $('fsMode');
+const $fsNumber = $('fsNumber');
+const $fsDots   = $('fsDots');
+const $fsMeter  = $('fsMeter');
+const $fsBpm    = $('fsBpm');
+const $fsTempo  = $('fsTempo');
+const $fsBar    = $('fsBar');
+const $fsBtn    = $('fsBtn');
+const $fsExit   = $('fsExit');
+const $fsToggle = $('fsToggle');
 
 // ──────────────────────────────────────────────
 // Utils
@@ -289,6 +294,7 @@ $accentGrid.addEventListener('click', e => {
   cell.className = 'acc-cell lvl' + accents[i];
   cell.title = `Pulso ${i + 1}: ${ACCENT_LABEL[accents[i]]} (clic para cambiar)`;
   cell.setAttribute('aria-label', cell.title);
+  if (fsIsOpen()) buildFsDots();
 });
 
 // ──────────────────────────────────────────────
@@ -481,7 +487,92 @@ function buildBeatLights() {
 function setActiveLed(idx) {
   $beatLights.querySelectorAll('.led')
     .forEach((el, i) => el.classList.toggle('on', i === idx));
+  renderBig(idx, 'beat');
 }
+
+// ──────────────────────────────────────────────
+// Modo pantalla completa
+// El número del pulso en grande: se lee desde el fondo del salón.
+// ──────────────────────────────────────────────
+function fsIsOpen() { return !$fsMode.hidden; }
+
+function buildFsDots() {
+  const groups = getGroups();
+  $fsDots.innerHTML = '';
+  groups.forEach((units, i) => {
+    const d = document.createElement('div');
+    d.className = 'fs-dot lvl' + (accents[i] ?? 1) + (units === 3 ? ' wide' : '');
+    $fsDots.appendChild(d);
+  });
+}
+
+function refreshFsMeta() {
+  $fsMeter.textContent = getMeterId();
+  $fsBpm.textContent   = getBPM() + ' BPM ' + getMeter().bpmLabel;
+  $fsTempo.textContent = getTempoName(getBPM());
+}
+
+/** Pinta el pulso actual en grande. kind: 'beat' | 'countin' | 'idle' */
+function renderBig(idx, kind) {
+  if (!fsIsOpen()) return;
+  if (idx < 0) {
+    $fsNumber.textContent = '1';
+    $fsNumber.className = 'fs-number lvl0';
+    $fsDots.querySelectorAll('.fs-dot').forEach(d => d.classList.remove('on'));
+    return;
+  }
+  const level = kind === 'countin' ? 2 : (accents[idx] ?? 1);
+  $fsNumber.textContent = String(idx + 1);
+  // Reinicia la animación de golpe cambiando la clase con un reflow de por medio.
+  $fsNumber.className = 'fs-number';
+  void $fsNumber.offsetWidth;
+  $fsNumber.className = 'fs-number hit lvl' + level + (kind === 'countin' ? ' countin' : '');
+  $fsDots.querySelectorAll('.fs-dot').forEach((d, i) => d.classList.toggle('on', i === idx));
+}
+
+function openBig() {
+  $fsMode.hidden = false;
+  document.documentElement.classList.add('fs-open');
+  buildFsDots();
+  refreshFsMeta();
+  syncFsToggle();
+  $fsBar.textContent = isPlaying ? $barCounter.textContent : '–';
+  renderBig(-1);
+  const el = document.documentElement;
+  if (el.requestFullscreen) el.requestFullscreen().catch(() => {});
+  else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
+  $fsExit.focus();
+}
+
+function closeBig() {
+  $fsMode.hidden = true;
+  document.documentElement.classList.remove('fs-open');
+  if (document.fullscreenElement && document.exitFullscreen)
+    document.exitFullscreen().catch(() => {});
+  else if (document.webkitFullscreenElement && document.webkitExitFullscreen)
+    document.webkitExitFullscreen();
+  $fsBtn.focus();
+}
+
+function syncFsToggle() {
+  $fsToggle.textContent = isPlaying ? '■ Detener' : '▶ Iniciar';
+  $fsToggle.classList.toggle('stop', isPlaying);
+}
+
+$fsBtn.addEventListener('click', openBig);
+$fsExit.addEventListener('click', closeBig);
+$fsToggle.addEventListener('click', toggleMetronome);
+
+// Si el usuario sale del modo nativo (Esc, gesto del sistema), cerramos el overlay.
+['fullscreenchange', 'webkitfullscreenchange'].forEach(ev =>
+  document.addEventListener(ev, () => {
+    const native = document.fullscreenElement || document.webkitFullscreenElement;
+    if (!native && fsIsOpen()) {
+      $fsMode.hidden = true;
+      document.documentElement.classList.remove('fs-open');
+    }
+  })
+);
 
 // ──────────────────────────────────────────────
 // Flash
@@ -566,6 +657,7 @@ function showCountBeat(n) {
   if (n < 0) { $countinDisp.classList.remove('show'); return; }
   $countinDisp.textContent = String(n + 1);
   $countinDisp.classList.add('show');
+  renderBig(n, 'countin');
 }
 
 // ──────────────────────────────────────────────
@@ -611,7 +703,7 @@ function scheduleTick(tick, bar, when) {
       synthCountIn(when, hit.pi === 0);
       const p = plan.pulses[hit.pi];
       markPulse(when, p.len * spt, hit.pi % 2 === 1);
-      setTimeout(() => { showCountBeat(hit.pi); setActiveLed(hit.pi); }, uiDelay);
+      setTimeout(() => { setActiveLed(hit.pi); showCountBeat(hit.pi); }, uiDelay);
     }
     return;
   }
@@ -630,6 +722,8 @@ function scheduleTick(tick, bar, when) {
         doFlash();
         $barCounter.textContent = String(bar + 1);
         $barCounter.classList.toggle('muted-bar', muted);
+        $fsBar.textContent = String(bar + 1);
+        $fsMode.classList.toggle('muted-bar', muted);
       }
     }, uiDelay);
   }
@@ -714,6 +808,7 @@ function startMetronome() {
   $toggleBtn.classList.add('stop');
   $barCounter.textContent = '1';
   $srStatus.textContent = `Metrónomo iniciado a ${getBPM()} BPM en ${getMeterId()}`;
+  syncFsToggle();
   pendulumStart();
   startScheduler();
 }
@@ -726,6 +821,10 @@ function stopMetronome() {
   $toggleBtn.classList.remove('stop');
   $srStatus.textContent = 'Metrónomo detenido';
   setActiveLed(-1);
+  syncFsToggle();
+  $fsBar.textContent = '–';
+  $fsMode.classList.remove('muted-bar');
+  $barCounter.textContent = '–';
   $barCounter.classList.remove('muted-bar');
   pendulumStop();
   stopScheduler();
@@ -796,6 +895,7 @@ function buildAll() {
   rebuildPattern();
   $tempoName.textContent = getTempoName(getBPM());
   $bpmUnitHint.textContent = getMeter().bpmLabel;
+  if (fsIsOpen()) { buildFsDots(); refreshFsMeta(); }
 }
 
 function updateSliderFills() {
@@ -810,6 +910,7 @@ function onBPMChanged(opts = {}) {
   $tempoName.textContent = getTempoName(v);
   updateSliderFills();
   setPendulumSpeed();
+  refreshFsMeta();
   if (!opts.keepRamp && isPlaying && tempoRampBase !== null) tempoRampBase = v;
 }
 
@@ -833,91 +934,6 @@ function handleTap() {
     $tapAvg.textContent = '…';
   }
 }
-
-// ──────────────────────────────────────────────
-// Presets (localStorage)
-// ──────────────────────────────────────────────
-const PRESET_KEY = 'metro-presets-v1';
-
-function readPresets() {
-  try { return JSON.parse(localStorage.getItem(PRESET_KEY)) || {}; }
-  catch { return {}; }
-}
-function writePresets(obj) {
-  try { localStorage.setItem(PRESET_KEY, JSON.stringify(obj)); } catch {}
-}
-function currentConfig() {
-  return {
-    bpm: getBPM(), meter: getMeterId(), grouping: $grouping.value,
-    subdiv: $subdiv.value, sonido: $sonido.value, vol: getVol(),
-    accents: accents.slice(), pattern: activePattern,
-    gap: { on: $gapChk.checked, play: $gapPlay.value, mute: $gapMute.value },
-    ramp: { on: $rampChk.checked, bars: $rampBars.value,
-            amount: $rampAmount.value, max: $rampMax.value },
-    countIn: $countInChk.checked, countInBars: $countInBars.value,
-  };
-}
-function applyConfig(c) {
-  if (!c) return;
-  $bpm.value = String(c.bpm ?? 120);
-  $compas.value = METERS[c.meter] ? c.meter : '4/4';
-  buildGroupingOptions();
-  if (c.grouping) $grouping.value = c.grouping;
-  buildSubdivOptions();
-  if (c.subdiv) $subdiv.value = c.subdiv;
-  $sonido.value  = c.sonido ?? 'click';
-  $volumen.value = String(c.vol ?? 0.8);
-  activePattern  = c.pattern ?? 'off';
-  setPatternUI(activePattern);
-  $countInChk.checked = !!c.countIn;
-  if (c.countInBars) $countInBars.value = c.countInBars;
-  if (c.gap)  { $gapChk.checked = !!c.gap.on;  $gapPlay.value = c.gap.play;  $gapMute.value = c.gap.mute; }
-  if (c.ramp) { $rampChk.checked = !!c.ramp.on; $rampBars.value = c.ramp.bars;
-                $rampAmount.value = c.ramp.amount; $rampMax.value = c.ramp.max; }
-  buildBeatLights();
-  accents = Array.isArray(c.accents) && c.accents.length === getGroups().length
-          ? c.accents.slice() : defaultAccents(getGroups().length);
-  buildAccentGrid();
-  rebuildTiming();
-  rebuildPattern();
-  masterGain.gain.value = getVol();
-  onBPMChanged();
-  $bpmUnitHint.textContent = getMeter().bpmLabel;
-}
-function refreshPresetList() {
-  const p = readPresets(), names = Object.keys(p).sort();
-  $presetList.innerHTML = '';
-  if (!names.length) {
-    const o = document.createElement('option');
-    o.value = ''; o.textContent = '— sin presets guardados —';
-    $presetList.appendChild(o);
-  }
-  for (const n of names) {
-    const o = document.createElement('option');
-    o.value = n; o.textContent = n;
-    $presetList.appendChild(o);
-  }
-  $presetLoad.disabled = $presetDel.disabled = !names.length;
-}
-
-$presetSave.addEventListener('click', () => {
-  const name = ($presetName.value || '').trim();
-  if (!name) { $presetName.focus(); return; }
-  const p = readPresets();
-  p[name] = currentConfig();
-  writePresets(p);
-  refreshPresetList();
-  $presetList.value = name;
-  $presetName.value = '';
-});
-$presetLoad.addEventListener('click', () => {
-  const p = readPresets(), n = $presetList.value;
-  if (n && p[n]) { const wasPlaying = isPlaying; stopMetronome(); applyConfig(p[n]); if (wasPlaying) startMetronome(); }
-});
-$presetDel.addEventListener('click', () => {
-  const p = readPresets(), n = $presetList.value;
-  if (n && p[n]) { delete p[n]; writePresets(p); refreshPresetList(); }
-});
 
 // ──────────────────────────────────────────────
 // Tema
@@ -998,6 +1014,10 @@ window.addEventListener('keydown', e => {
     onBPMChanged();
   } else if (e.code === 'KeyT' && !typing) {
     handleTap();
+  } else if (e.code === 'KeyF' && !typing) {
+    fsIsOpen() ? closeBig() : openBig();
+  } else if (e.code === 'Escape' && fsIsOpen()) {
+    closeBig();
   }
 });
 
@@ -1013,7 +1033,6 @@ window.addEventListener('keydown', e => {
   rebuildTiming();
   masterGain.gain.value = getVol();
   updateSliderFills();
-  refreshPresetList();
   pendulumStop();   // deja el brazo en reposo
 
   if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
