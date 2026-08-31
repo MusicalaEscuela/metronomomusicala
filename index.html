@@ -192,7 +192,8 @@
   <p class="hints">Espacio: Iniciar/Detener · ↑↓: BPM ±1 · Shift+↑↓: ±5 · T: Tap · F: Pantalla completa</p>
 
   <footer>
-    <p>© 2025 Musicala · Todos los derechos reservados</p>
+    <p>© 2025 Musicala · Todos los derechos reservados
+       <span class="build" id="buildTag">v4</span></p>
   </footer>
 </div>
 
@@ -201,7 +202,6 @@
      aria-label="Modo pantalla completa">
   <div class="fs-top">
     <span class="fs-chip" id="fsMeter">4/4</span>
-    <span class="fs-chip" id="fsBpm">120 BPM</span>
     <span class="fs-chip" id="fsTempo">Moderato</span>
     <button class="fs-x" id="fsExit" aria-label="Salir de pantalla completa">✕</button>
   </div>
@@ -212,8 +212,23 @@
   </div>
 
   <div class="fs-bottom">
-    <button class="btn primary" id="fsToggle">▶ Iniciar</button>
-    <span class="fs-bar">compás <b id="fsBar">–</b></span>
+    <div class="fs-bpm">
+      <button class="fs-step" id="fsDown" aria-label="Disminuir BPM">−</button>
+      <div class="fs-bpm-read">
+        <b id="fsBpm">120</b>
+        <span id="fsBpmUnit">BPM ♩</span>
+      </div>
+      <button class="fs-step" id="fsUp" aria-label="Aumentar BPM">+</button>
+    </div>
+
+    <input type="range" id="fsSlider" min="30" max="400" value="120"
+           class="fs-slider" aria-label="BPM en pantalla completa">
+
+    <div class="fs-actions">
+      <button class="btn primary" id="fsToggle">▶ Iniciar</button>
+      <button class="tap-btn" id="fsTap" aria-label="Tap tempo">TAP</button>
+      <span class="fs-bar">compás <b id="fsBar">–</b></span>
+    </div>
   </div>
 </div>
 

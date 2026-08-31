@@ -932,3 +932,123 @@ input.mini:focus { outline: none; border-color: var(--brand); }
 
 /* Sin scroll de fondo mientras el modo pantalla completa está abierto */
 html.fs-open, html.fs-open body { overflow: hidden; }
+
+/* ---------- Control de BPM dentro de pantalla completa ---------- */
+.fs-bottom {
+  display: grid;
+  justify-items: center;
+  gap: clamp(8px, 1.6vh, 16px);
+}
+.fs-bpm {
+  display: flex;
+  align-items: center;
+  gap: clamp(10px, 2vw, 22px);
+}
+.fs-step {
+  width: clamp(52px, 7vw, 68px);
+  height: clamp(52px, 7vw, 68px);
+  border-radius: 16px;
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  color: var(--text);
+  font-size: clamp(24px, 3.2vw, 32px);
+  font-weight: 300;
+  line-height: 1;
+  cursor: pointer;
+  touch-action: none;              /* la pulsación sostenida no arrastra la página */
+  transition: border-color .15s, background .15s, transform .08s;
+}
+.fs-step:hover  { border-color: var(--brand); }
+.fs-step:active { transform: scale(.93); background: var(--surface3); border-color: var(--brand); }
+
+.fs-bpm-read {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: clamp(140px, 18vw, 200px);
+  justify-content: center;
+}
+.fs-bpm-read b {
+  font-family: 'Roboto Mono', monospace;
+  font-size: clamp(30px, 4.4vw, 46px);
+  font-weight: 700;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+.fs-bpm-read span {
+  font-family: 'Roboto Mono', monospace;
+  font-size: clamp(11px, 1.4vw, 14px);
+  letter-spacing: .1em;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+
+.fs-slider {
+  -webkit-appearance: none; appearance: none;
+  width: min(520px, 82vw);
+  height: 6px;
+  border-radius: 3px;
+  background: linear-gradient(90deg, var(--brand) var(--fill, 24%), var(--surface3) var(--fill, 24%));
+  cursor: pointer;
+  outline: none;
+}
+.fs-slider::-webkit-slider-thumb {
+  -webkit-appearance: none; appearance: none;
+  width: 26px; height: 26px;
+  border-radius: 50%;
+  background: var(--brand);
+  border: 3px solid var(--surface);
+  box-shadow: 0 2px 10px var(--brand-glow);
+  cursor: pointer;
+}
+.fs-slider::-moz-range-thumb {
+  width: 26px; height: 26px;
+  border-radius: 50%;
+  background: var(--brand);
+  border: 3px solid var(--surface);
+  cursor: pointer;
+}
+
+.fs-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+.fs-actions .btn { min-width: 170px; font-size: 16px; }
+.fs-actions .tap-btn { padding: 12px 22px; font-size: 14px; }
+
+/* Con poca altura, el control se compacta para que el número siga mandando */
+@media (max-height: 520px) {
+  .fs-step { width: 46px; height: 46px; font-size: 22px; border-radius: 13px; }
+  .fs-bpm-read b { font-size: 28px; }
+  .fs-slider { height: 5px; }
+  .fs-actions .btn { min-width: 140px; padding: 10px 16px; font-size: 14px; }
+}
+
+/* Sello de versión en el pie */
+.build {
+  font-family: 'Roboto Mono', monospace;
+  font-size: 10px;
+  color: var(--text-dim);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 1px 5px;
+  margin-left: 6px;
+}
+
+/* Pantallas bajas (móvil en horizontal): el número cede espacio para que
+   el control de BPM y los puntos no se encimen. */
+@media (max-height: 560px) {
+  .fs-mode   { padding: 12px clamp(12px, 3vw, 28px) 14px; gap: 8px; }
+  .fs-stage  { gap: 8px; overflow: hidden; }
+  .fs-number { font-size: min(38vh, 34vw); }
+  .fs-dots   { gap: 6px; }
+  .fs-bottom { gap: 7px; }
+}
+@media (max-height: 420px) {
+  .fs-number { font-size: min(31vh, 27vw); }
+  .fs-dot    { width: 11px; height: 11px; border-width: 2px; }
+  .fs-dot.wide { width: 20px; }
+}

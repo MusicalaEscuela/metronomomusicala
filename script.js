@@ -102,6 +102,11 @@ const $fsMeter  = $('fsMeter');
 const $fsBpm    = $('fsBpm');
 const $fsTempo  = $('fsTempo');
 const $fsBar    = $('fsBar');
+const $fsBpmUnit = $('fsBpmUnit');
+const $fsDown   = $('fsDown');
+const $fsUp     = $('fsUp');
+const $fsSlider = $('fsSlider');
+const $fsTap    = $('fsTap');
 const $fsBtn    = $('fsBtn');
 const $fsExit   = $('fsExit');
 const $fsToggle = $('fsToggle');
@@ -490,6 +495,46 @@ function setActiveLed(idx) {
   renderBig(idx, 'beat');
 }
 
+/** Único punto de cambio de BPM: lo usan los botones, el teclado y
+ *  el modo pantalla completa, así todo queda sincronizado. */
+function bumpBPM(delta) {
+  $bpm.value = String(clamp(getBPM() + delta, 30, 400));
+  onBPMChanged();
+}
+
+/** Pulsación sostenida: un paso al tocar y repetición acelerada al mantener.
+ *  Sin esto, subir de 60 a 140 en pantalla completa son ochenta toques. */
+function holdToRepeat(btn, step) {
+  let delayTimer = null, repeatTimer = null, ticks = 0;
+
+  const stop = () => {
+    clearTimeout(delayTimer); clearInterval(repeatTimer);
+    delayTimer = repeatTimer = null; ticks = 0;
+  };
+
+  btn.addEventListener('pointerdown', e => {
+    e.preventDefault();
+    stop();
+    bumpBPM(step);
+    delayTimer = setTimeout(() => {
+      repeatTimer = setInterval(() => {
+        ticks++;
+        bumpBPM(step * (ticks > 24 ? 5 : 1));   // tras ~2 s pasa a saltos de 5
+      }, 80);
+    }, 380);
+  });
+
+  // Se escucha en window: si el dedo se levanta fuera del botón, igual para.
+  ['pointerup', 'pointercancel'].forEach(ev =>
+    window.addEventListener(ev, stop)
+  );
+  btn.addEventListener('pointerleave', stop);
+
+  // Activación por teclado (Enter sobre el botón enfocado): el click sintético
+  // llega con detail 0, así que no se duplica con el del puntero.
+  btn.addEventListener('click', e => { if (e.detail === 0) bumpBPM(step); });
+}
+
 // ──────────────────────────────────────────────
 // Modo pantalla completa
 // El número del pulso en grande: se lee desde el fondo del salón.
@@ -507,9 +552,12 @@ function buildFsDots() {
 }
 
 function refreshFsMeta() {
-  $fsMeter.textContent = getMeterId();
-  $fsBpm.textContent   = getBPM() + ' BPM ' + getMeter().bpmLabel;
-  $fsTempo.textContent = getTempoName(getBPM());
+  const bpm = getBPM();
+  $fsMeter.textContent   = getMeterId();
+  $fsBpm.textContent     = String(bpm);
+  $fsBpmUnit.textContent = 'BPM ' + getMeter().bpmLabel;
+  $fsTempo.textContent   = getTempoName(bpm);
+  if ($fsSlider.value !== String(bpm)) $fsSlider.value = String(bpm);
 }
 
 /** Pinta el pulso actual en grande. kind: 'beat' | 'countin' | 'idle' */
@@ -558,6 +606,14 @@ function syncFsToggle() {
   $fsToggle.textContent = isPlaying ? '■ Detener' : '▶ Iniciar';
   $fsToggle.classList.toggle('stop', isPlaying);
 }
+
+holdToRepeat($fsUp, 1);
+holdToRepeat($fsDown, -1);
+$fsSlider.addEventListener('input', () => {
+  $bpm.value = $fsSlider.value;
+  onBPMChanged();
+});
+$fsTap.addEventListener('click', handleTap);
 
 $fsBtn.addEventListener('click', openBig);
 $fsExit.addEventListener('click', closeBig);
@@ -899,7 +955,9 @@ function buildAll() {
 }
 
 function updateSliderFills() {
-  $bpmSlider.style.setProperty('--fill', ((getBPM() - 30) / 370 * 100).toFixed(1) + '%');
+  const pct = ((getBPM() - 30) / 370 * 100).toFixed(1) + '%';
+  $bpmSlider.style.setProperty('--fill', pct);
+  $fsSlider.style.setProperty('--fill', pct);
   $volumen.style.setProperty('--vfill', (getVol() * 100).toFixed(1) + '%');
 }
 
@@ -955,8 +1013,8 @@ $toggleBtn.addEventListener('click', toggleMetronome);
 $resetBtn.addEventListener('click', resetAll);
 $themeToggle.addEventListener('click', toggleTheme);
 
-$bpmUp.addEventListener('click',   () => { $bpm.value = String(clamp(getBPM() + 1, 30, 400)); onBPMChanged(); });
-$bpmDown.addEventListener('click', () => { $bpm.value = String(clamp(getBPM() - 1, 30, 400)); onBPMChanged(); });
+holdToRepeat($bpmUp, 1);
+holdToRepeat($bpmDown, -1);
 
 $bpm.addEventListener('input', () => {
   const v = clamp(parseInt($bpm.value) || 30, 30, 400);
@@ -1009,9 +1067,7 @@ window.addEventListener('keydown', e => {
   } else if (e.code === 'ArrowUp' || e.code === 'ArrowDown') {
     if (typing) return;
     e.preventDefault();
-    const d = (e.shiftKey ? 5 : 1) * (e.code === 'ArrowUp' ? 1 : -1);
-    $bpm.value = String(clamp(getBPM() + d, 30, 400));
-    onBPMChanged();
+    bumpBPM((e.shiftKey ? 5 : 1) * (e.code === 'ArrowUp' ? 1 : -1));
   } else if (e.code === 'KeyT' && !typing) {
     handleTap();
   } else if (e.code === 'KeyF' && !typing) {
@@ -1036,6 +1092,26 @@ window.addEventListener('keydown', e => {
   pendulumStop();   // deja el brazo en reposo
 
   if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
-    navigator.serviceWorker.register('sw.js').catch(() => {});
+    // updateViaCache 'none': el navegador no sirve un sw.js viejo desde su caché HTTP.
+    const hadController = !!navigator.serviceWorker.controller;
+    let reloading = false;
+
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      // Solo recargamos si ya había una versión activa: en la primera visita
+      // el cambio de controlador es normal y recargar sería molesto.
+      if (!hadController || reloading) return;
+      reloading = true;
+      location.reload();
+    });
+
+    navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' })
+      .then(reg => {
+        reg.update().catch(() => {});
+        // Al volver a la pestaña comprobamos si hay una versión nueva publicada.
+        document.addEventListener('visibilitychange', () => {
+          if (!document.hidden) reg.update().catch(() => {});
+        });
+      })
+      .catch(() => {});
   }
 })();
