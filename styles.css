@@ -860,35 +860,56 @@ input.mini:focus { outline: none; border-color: var(--brand); }
   100% { transform: scale(1); text-shadow: none; }
 }
 
-/* ---- Puntos de pulso ---- */
-.fs-dots {
+/* ---- Línea de conteo: 1 & 2 & 3 & 4 & ---- */
+.fs-count {
   display: flex;
-  gap: clamp(8px, 1.6vw, 18px);
+  gap: clamp(5px, 1vw, 12px);
   align-items: center;
   justify-content: center;
   flex-wrap: wrap;
+  max-width: 94vw;
 }
-.fs-dot {
-  width: clamp(14px, 2.4vw, 26px);
-  height: clamp(14px, 2.4vw, 26px);
-  border-radius: 50%;
-  background: var(--surface3);
+.fs-beat {
+  min-width: clamp(30px, 4.2vw, 52px);
+  padding: clamp(4px, .9vh, 9px) clamp(5px, .9vw, 10px);
+  border-radius: 11px;
+  background: var(--surface2);
   border: 2px solid var(--border2);
-  transition: transform .1s, background .1s, box-shadow .1s, border-color .1s;
+  color: var(--text-mid);
+  font-family: 'Roboto Mono', monospace;
+  font-weight: 700;
+  font-size: clamp(14px, 2.1vw, 24px);
+  line-height: 1;
+  text-align: center;
+  transition: transform .1s, background .1s, color .1s, box-shadow .1s, border-color .1s;
 }
-.fs-dot.wide { width: clamp(24px, 4vw, 42px); border-radius: 999px; }
-.fs-dot.lvl2 { border-color: var(--brand); }
-.fs-dot.lvl0 { border-style: dashed; opacity: .45; }
-.fs-dot.on {
+/* Las subdivisiones pesan menos que los pulsos: el número manda */
+.fs-beat.weak {
+  min-width: clamp(24px, 3.2vw, 40px);
+  font-weight: 400;
+  font-size: clamp(12px, 1.7vw, 19px);
+  color: var(--text-dim);
+  border-color: var(--border);
+  background: transparent;
+}
+.fs-beat.lvl2 { border-color: var(--brand); color: var(--text); }
+.fs-beat.lvl0 { border-style: dashed; opacity: .4; }
+.fs-beat.on {
   background: var(--accent);
   border-color: var(--accent);
-  transform: scale(1.3);
-  box-shadow: 0 0 0 5px var(--accent-glow), 0 0 22px var(--accent-glow);
+  color: #05201d;
+  transform: scale(1.18);
+  box-shadow: 0 0 0 4px var(--accent-glow), 0 0 20px var(--accent-glow);
 }
-.fs-dot.on.lvl2 {
+.fs-beat.on.weak {
+  transform: scale(1.12);
+  color: #05201d;
+}
+.fs-beat.on.lvl2 {
   background: var(--brand);
   border-color: var(--brand);
-  box-shadow: 0 0 0 5px var(--brand-glow), 0 0 26px var(--brand-glow);
+  color: #fff;
+  box-shadow: 0 0 0 4px var(--brand-glow), 0 0 24px var(--brand-glow);
 }
 
 /* ---- Barra inferior ---- */
@@ -1044,11 +1065,19 @@ html.fs-open, html.fs-open body { overflow: hidden; }
   .fs-mode   { padding: 12px clamp(12px, 3vw, 28px) 14px; gap: 8px; }
   .fs-stage  { gap: 8px; overflow: hidden; }
   .fs-number { font-size: min(38vh, 34vw); }
-  .fs-dots   { gap: 6px; }
+  .fs-count  { gap: 5px; }
   .fs-bottom { gap: 7px; }
 }
 @media (max-height: 420px) {
   .fs-number { font-size: min(31vh, 27vw); }
-  .fs-dot    { width: 11px; height: 11px; border-width: 2px; }
-  .fs-dot.wide { width: 20px; }
+  .fs-beat   { min-width: 26px; padding: 3px 5px; font-size: 13px; border-radius: 8px; }
+  .fs-beat.weak { min-width: 20px; font-size: 11px; }
 }
+
+
+/* El "&" y demás sílabas no compiten con el número del pulso */
+.fs-number.sub {
+  font-size: min(30vh, 26vw);
+  color: var(--text-mid);
+}
+.fs-number.sub.lvl2 { color: var(--text-mid); }

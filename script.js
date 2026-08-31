@@ -97,7 +97,7 @@ const $rampMax     = $('rampMax');
 // Pantalla completa
 const $fsMode   = $('fsMode');
 const $fsNumber = $('fsNumber');
-const $fsDots   = $('fsDots');
+const $fsCount  = $('fsCount');
 const $fsMeter  = $('fsMeter');
 const $fsBpm    = $('fsBpm');
 const $fsTempo  = $('fsTempo');
@@ -167,7 +167,9 @@ function getGroups() {
 // Plan del compás: pulsos, ticks y mapa de clics
 // ──────────────────────────────────────────────
 let barPlan  = null;   // { pulses:[{start,len,units}], ticks }
-let clickMap = null;   // Map<tickInBar, {pulse:bool, pi:int}>
+let clickMap = null;   // Map<tickInBar, entrada>
+let countSeq = [];     // entradas del compás en orden: 1, &, 2, &, …
+let pulseSeq = [];     // pulseSeq[pulso] = índice en countSeq
 
 function buildBarPlan() {
   const m = getMeter();
@@ -180,6 +182,21 @@ function buildBarPlan() {
     t += len;
   });
   return { pulses, ticks: t };
+}
+
+// Sílabas del conteo hablado, en la convención anglosajona que ya usan:
+// 2 por pulso → "1 &" · 3 → "1 & a" · 4 → "1 e & a".
+// Con 6 por pulso las corcheas llevan el conteo y las semicorcheas
+// intermedias van con punto: "1 · & · a ·".
+const SUB_SYLLABLES = {
+  2: ['&'],
+  3: ['&', 'a'],
+  4: ['e', '&', 'a'],
+  6: ['·', '&', '·', 'a', '·'],
+};
+function syllable(m, k) {
+  const list = SUB_SYLLABLES[m];
+  return (list && list[k - 1]) || '·';
 }
 
 /** Opciones de subdivisión, dependientes del tipo de compás.
@@ -209,22 +226,47 @@ function currentSubdiv() {
   return opts.find(o => o.v === $subdiv.value) || opts[0];
 }
 
+/** Construye el mapa de clics y, de paso, la línea de conteo del compás:
+ *  cada entrada sabe si es pulso, a qué pulso pertenece y qué etiqueta
+ *  se canta en ella ("1", "&", "a", …). */
 function buildClickMap(plan) {
   const sd  = currentSubdiv();
   const map = new Map();
+
   for (const p of plan.pulses) {
-    map.set(p.start, { pulse: true, pi: p.index });
+    let m, step;
     if (sd.mode === 'perPulse') {
-      for (let k = 1; k < sd.n; k++) {
-        const off = p.start + Math.round(k * p.len / sd.n);
-        if (!map.has(off)) map.set(off, { pulse: false, pi: p.index });
-      }
+      m = sd.n;
+      step = null;                       // repartido proporcionalmente
     } else {
-      const step = Math.max(1, Math.round(sd.ticks));
-      for (let off = p.start + step; off < p.start + p.len; off += step)
-        if (!map.has(off)) map.set(off, { pulse: false, pi: p.index });
+      step = Math.max(1, Math.round(sd.ticks));
+      m = Math.max(1, Math.round(p.len / step));
+    }
+    for (let k = 0; k < m; k++) {
+      const off = step === null
+        ? p.start + Math.round(k * p.len / m)
+        : p.start + k * step;
+      if (off >= p.start + p.len || map.has(off)) continue;
+      map.set(off, {
+        pulse: k === 0,
+        pi: p.index,
+        label: k === 0 ? String(p.index + 1) : syllable(m, k),
+      });
     }
   }
+
+  // Orden por tick: así la línea se lee de izquierda a derecha.
+  const seq = [];
+  const pulses = [];
+  [...map.keys()].sort((a, b) => a - b).forEach(t => {
+    const e = map.get(t);
+    e.seq = seq.length;
+    if (e.pulse) pulses[e.pi] = e.seq;
+    seq.push(e);
+  });
+
+  countSeq = seq;
+  pulseSeq = pulses;
   return map;
 }
 
@@ -299,7 +341,7 @@ $accentGrid.addEventListener('click', e => {
   cell.className = 'acc-cell lvl' + accents[i];
   cell.title = `Pulso ${i + 1}: ${ACCENT_LABEL[accents[i]]} (clic para cambiar)`;
   cell.setAttribute('aria-label', cell.title);
-  if (fsIsOpen()) buildFsDots();
+  if (fsIsOpen()) buildFsCount();
 });
 
 // ──────────────────────────────────────────────
@@ -447,7 +489,7 @@ const PATTERNS = {
     parts: { bombo:[0], redoblante:[2,4], platillo:[0,2,4] } },
   balada68: { meters: ['6/8'], grid: 6,
     parts: { bombo:[0], redoblante:[3], platillo:[0,1,2,3,4,5] } },
-  rockhanon: { meters: ['12/8'], grid: 12,
+  rock128: { meters: ['12/8'], grid: 12,
     parts: { bombo:[0,6], redoblante:[3,9],
              platillo:[0,1,2,3,4,5,6,7,8,9,10,11] } },
   shuffle12: { meters: ['12/8'], grid: 12,
@@ -459,7 +501,7 @@ const PATTERNS = {
 
 const PATTERN_METER = {
   groove1:'4/4', funk:'4/4', rock:'4/4', bossa:'4/4', waltz34:'3/4',
-  balada68:'6/8', rockhanon:'12/8', shuffle12:'12/8', odd78:'7/8',
+  balada68:'6/8', rock128:'12/8', shuffle12:'12/8', odd78:'7/8',
 };
 
 let patternTicks     = null;
@@ -541,14 +583,20 @@ function holdToRepeat(btn, step) {
 // ──────────────────────────────────────────────
 function fsIsOpen() { return !$fsMode.hidden; }
 
-function buildFsDots() {
-  const groups = getGroups();
-  $fsDots.innerHTML = '';
-  groups.forEach((units, i) => {
-    const d = document.createElement('div');
-    d.className = 'fs-dot lvl' + (accents[i] ?? 1) + (units === 3 ? ' wide' : '');
-    $fsDots.appendChild(d);
-  });
+/** Dibuja la línea de conteo: "1 & 2 & 3 & 4 &".
+ *  Si hay demasiadas casillas para que se lean de lejos, deja solo los pulsos. */
+let fsDense = false;
+function buildFsCount() {
+  fsDense = countSeq.length > 16;
+  const items = fsDense ? countSeq.filter(e => e.pulse) : countSeq;
+  $fsCount.innerHTML = '';
+  for (const e of items) {
+    const c = document.createElement('div');
+    c.className = 'fs-beat lvl' + (accents[e.pi] ?? 1) + (e.pulse ? ' strong' : ' weak');
+    c.dataset.seq = String(e.seq);
+    c.textContent = e.label;
+    $fsCount.appendChild(c);
+  }
 }
 
 function refreshFsMeta() {
@@ -560,28 +608,45 @@ function refreshFsMeta() {
   if ($fsSlider.value !== String(bpm)) $fsSlider.value = String(bpm);
 }
 
-/** Pinta el pulso actual en grande. kind: 'beat' | 'countin' | 'idle' */
-function renderBig(idx, kind) {
+/** Pinta la posición actual del conteo en grande.
+ *  seqIdx es el índice dentro de countSeq; kind: 'beat' | 'sub' | 'countin'. */
+function renderCount(seqIdx, kind) {
   if (!fsIsOpen()) return;
-  if (idx < 0) {
+
+  if (seqIdx < 0) {
     $fsNumber.textContent = '1';
     $fsNumber.className = 'fs-number lvl0';
-    $fsDots.querySelectorAll('.fs-dot').forEach(d => d.classList.remove('on'));
+    $fsCount.querySelectorAll('.fs-beat').forEach(c => c.classList.remove('on'));
     return;
   }
-  const level = kind === 'countin' ? 2 : (accents[idx] ?? 1);
-  $fsNumber.textContent = String(idx + 1);
+
+  const e = countSeq[seqIdx];
+  if (!e) return;
+  const level = kind === 'countin' ? 2 : (accents[e.pi] ?? 1);
+
+  $fsNumber.textContent = e.label;
   // Reinicia la animación de golpe cambiando la clase con un reflow de por medio.
   $fsNumber.className = 'fs-number';
   void $fsNumber.offsetWidth;
-  $fsNumber.className = 'fs-number hit lvl' + level + (kind === 'countin' ? ' countin' : '');
-  $fsDots.querySelectorAll('.fs-dot').forEach((d, i) => d.classList.toggle('on', i === idx));
+  $fsNumber.className = 'fs-number hit lvl' + level
+                      + (e.pulse ? '' : ' sub')
+                      + (kind === 'countin' ? ' countin' : '');
+
+  $fsCount.querySelectorAll('.fs-beat')
+    .forEach(c => c.classList.toggle('on', c.dataset.seq === String(seqIdx)));
+}
+
+/** Atajo para los pulsos, que es lo que conocen los LEDs. */
+function renderBig(pulseIdx, kind) {
+  if (pulseIdx < 0) { renderCount(-1, kind); return; }
+  const seqIdx = pulseSeq[pulseIdx];
+  if (seqIdx !== undefined) renderCount(seqIdx, kind);
 }
 
 function openBig() {
   $fsMode.hidden = false;
   document.documentElement.classList.add('fs-open');
-  buildFsDots();
+  buildFsCount();
   refreshFsMeta();
   syncFsToggle();
   $fsBar.textContent = isPlaying ? $barCounter.textContent : '–';
@@ -784,6 +849,13 @@ function scheduleTick(tick, bar, when) {
     }, uiDelay);
   }
 
+  // Las subdivisiones solo se pintan en pantalla completa, que es donde
+  // se lee la línea de conteo.
+  if (hit && !hit.pulse && fsIsOpen()) {
+    const seqIdx = hit.seq;
+    setTimeout(() => renderCount(seqIdx, 'sub'), uiDelay);
+  }
+
   if (muted) return;   // gap click: silencio total, la cuenta sigue
 
   // ── Clic del metrónomo (silenciado si hay groove activo) ──
@@ -940,6 +1012,7 @@ function rebuildTiming() {
   clickMap = buildClickMap(barPlan);
   patternTicks = buildPatternTicks();
   setPendulumSpeed();
+  if (fsIsOpen()) buildFsCount();
 }
 
 function buildAll() {
@@ -951,7 +1024,7 @@ function buildAll() {
   rebuildPattern();
   $tempoName.textContent = getTempoName(getBPM());
   $bpmUnitHint.textContent = getMeter().bpmLabel;
-  if (fsIsOpen()) { buildFsDots(); refreshFsMeta(); }
+  if (fsIsOpen()) { buildFsCount(); refreshFsMeta(); }
 }
 
 function updateSliderFills() {
