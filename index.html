@@ -2,19 +2,34 @@
 <html lang="es" data-theme="dark">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Metrónomo Musicala</title>
   <meta name="description" content="Metrónomo profesional – Musicala Escuela de Artes">
-  <meta name="theme-color" content="#080c14">
+  <meta name="theme-color" content="#0b0d12">
   <link rel="manifest" href="manifest.json">
   <link rel="icon" href="icon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="icon.svg">
   <!-- Evita flash de tema incorrecto al cargar -->
-  <script>const _st=localStorage.getItem('metro-theme');if(_st)document.documentElement.setAttribute('data-theme',_st);</script>
-  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <script>try{const _st=localStorage.getItem('metro-theme');if(_st)document.documentElement.setAttribute('data-theme',_st);}catch(e){}</script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+
+<!-- Íconos SVG reutilizables -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-play" viewBox="0 0 24 24"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.4-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z" fill="currentColor"/></symbol>
+  <symbol id="i-stop" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2.5" fill="currentColor"/></symbol>
+  <symbol id="i-expand" viewBox="0 0 24 24"><path d="M4 9V5a1 1 0 0 1 1-1h4M15 4h4a1 1 0 0 1 1 1v4M20 15v4a1 1 0 0 1-1 1h-4M9 20H5a1 1 0 0 1-1-1v-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+  <symbol id="i-reset" viewBox="0 0 24 24"><path d="M4 12a8 8 0 1 0 2.5-5.8M4 4v4.5h4.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+  <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></symbol>
+  <symbol id="i-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></symbol>
+  <symbol id="i-chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+</svg>
+
 <div class="app" id="app">
   <div class="flash-overlay" id="flashOverlay"></div>
   <div class="countin-display" id="countinDisplay">1</div>
@@ -27,108 +42,159 @@
            alt="Musicala" class="logo" onerror="this.style.display='none'">
       <div class="title-wrap">
         <h1>Metrónomo</h1>
-        <span class="sub">Musicala</span>
+        <span class="sub">Musicala · Escuela de Artes</span>
       </div>
     </div>
-    <button class="theme-toggle" id="themeToggle" title="Cambiar tema" aria-label="Cambiar tema">☀️</button>
+    <button class="icon-btn theme-toggle" id="themeToggle" title="Cambiar tema" aria-label="Cambiar tema">
+      <svg class="ic ic-sun"><use href="#i-sun"/></svg>
+      <svg class="ic ic-moon"><use href="#i-moon"/></svg>
+    </button>
   </header>
 
-  <!-- BPM -->
-  <section class="bpm-section" aria-label="Control de tempo">
+  <!-- Escenario principal: péndulo, tempo, pulsos y transporte -->
+  <section class="stage" aria-label="Control de tempo">
+    <div class="pendulum" aria-hidden="true">
+      <div class="scale"></div>
+      <div class="arm" id="pendulumArm">
+        <div class="weight"></div>
+      </div>
+    </div>
+
     <div class="bpm-row">
       <button class="bpm-btn" id="bpmDown" aria-label="Disminuir BPM">−</button>
       <div class="bpm-center">
-        <div class="bpm-number-row">
-          <input type="number" id="bpm" value="120" min="30" max="400" inputmode="numeric" aria-label="Valor de BPM">
+        <input type="number" id="bpm" value="120" min="30" max="400" inputmode="numeric" aria-label="Valor de BPM">
+        <div class="bpm-meta">
           <span class="bpm-unit">BPM <b id="bpmUnitHint" title="Figura a la que se refiere el BPM">♩</b></span>
+          <span class="dot-sep"></span>
+          <span class="tempo-name" id="tempoName">Allegro</span>
         </div>
-        <span class="tempo-name" id="tempoName">Allegro</span>
       </div>
       <button class="bpm-btn" id="bpmUp" aria-label="Aumentar BPM">+</button>
     </div>
+
     <div class="bpm-slider-wrap">
       <input type="range" id="bpmSlider" min="30" max="400" value="120" aria-label="Slider de BPM">
+      <div class="slider-scale" aria-hidden="true"><span>30</span><span>120</span><span>240</span><span>400</span></div>
     </div>
-    <div class="tap-row">
-      <button id="tapBtn" class="tap-btn" aria-label="Tap tempo">TAP</button>
-      <span id="tapAvg">Toca para calcular el BPM</span>
+
+    <div class="lights-wrap">
+      <div class="beat-lights" id="beatLights" aria-label="Indicadores de pulso" role="group"></div>
+      <div class="bar-counter">Compás <b id="barCounter">–</b></div>
+    </div>
+
+    <div class="transport">
+      <div class="transport-side">
+        <button id="tapBtn" class="tap-btn" aria-label="Tap tempo">TAP</button>
+        <span id="tapAvg">Toca al pulso</span>
+      </div>
+      <button id="toggleBtn" class="play-btn" aria-label="Iniciar o detener el metrónomo">
+        <svg class="ic ic-play"><use href="#i-play"/></svg>
+        <svg class="ic ic-stop"><use href="#i-stop"/></svg>
+        <span class="play-label">Iniciar</span>
+      </button>
+      <div class="transport-side end">
+        <button id="fsBtn" class="icon-btn" title="Pantalla completa (F)" aria-label="Abrir modo pantalla completa">
+          <svg class="ic"><use href="#i-expand"/></svg>
+        </button>
+        <button id="resetBtn" class="icon-btn" title="Reiniciar" aria-label="Reiniciar">
+          <svg class="ic"><use href="#i-reset"/></svg>
+        </button>
+      </div>
     </div>
   </section>
 
-  <!-- Controls -->
-  <section class="controls" aria-label="Opciones de reproducción">
-    <div class="cg">
-      <label for="compas">Compás</label>
-      <select id="compas">
-        <optgroup label="Simples">
-          <option value="2/4">2/4</option>
-          <option value="3/4">3/4</option>
-          <option value="4/4" selected>4/4</option>
-          <option value="5/4">5/4</option>
-        </optgroup>
-        <optgroup label="Compuestos">
-          <option value="6/8">6/8</option>
-          <option value="9/8">9/8</option>
-          <option value="12/8">12/8</option>
-        </optgroup>
-        <optgroup label="Irregulares">
-          <option value="5/8">5/8</option>
-          <option value="7/8">7/8</option>
-          <option value="8/8">8/8</option>
-        </optgroup>
-      </select>
+  <!-- Ritmo -->
+  <section class="card" aria-label="Compás y acentos">
+    <h2 class="card-title">Ritmo</h2>
+    <div class="controls">
+      <div class="cg">
+        <label for="compas">Compás</label>
+        <select id="compas">
+          <optgroup label="Simples">
+            <option value="2/4">2/4</option>
+            <option value="3/4">3/4</option>
+            <option value="4/4" selected>4/4</option>
+            <option value="5/4">5/4</option>
+          </optgroup>
+          <optgroup label="Compuestos">
+            <option value="6/8">6/8</option>
+            <option value="9/8">9/8</option>
+            <option value="12/8">12/8</option>
+          </optgroup>
+          <optgroup label="Irregulares">
+            <option value="5/8">5/8</option>
+            <option value="7/8">7/8</option>
+            <option value="8/8">8/8</option>
+          </optgroup>
+        </select>
+      </div>
+      <div class="cg" id="groupingWrap" hidden>
+        <label for="grouping">Agrupación</label>
+        <select id="grouping"></select>
+      </div>
+      <div class="cg">
+        <label for="subdivision">Subdivisión</label>
+        <select id="subdivision"></select>
+      </div>
     </div>
-    <div class="cg" id="groupingWrap" hidden>
-      <label for="grouping">Agrupación</label>
-      <select id="grouping"></select>
-    </div>
-    <div class="cg">
-      <label for="subdivision">Subdivisión</label>
-      <select id="subdivision"></select>
-    </div>
-    <div class="cg">
-      <label for="sonido">Sonido clic</label>
-      <select id="sonido">
-        <option value="click">Clic digital</option>
-        <option value="madera">Madera (clave)</option>
-        <option value="bombo">Bombo</option>
-        <option value="platillo">Platillo (HH)</option>
-        <option value="redoblante">Redoblante</option>
-      </select>
-    </div>
-    <div class="cg">
-      <label for="volumen">Volumen</label>
-      <input type="range" id="volumen" min="0" max="1" step="0.01" value="0.8" aria-label="Volumen">
+
+    <div class="accents">
+      <div class="row-label">Acentos <span class="sec-hint">toca para alternar fuerte · normal · silencio</span></div>
+      <div class="acc-grid" id="accentGrid" role="group" aria-label="Rejilla de acentos"></div>
     </div>
   </section>
 
-  <!-- Options -->
-  <section class="options" aria-label="Opciones adicionales">
-    <label class="chk">
-      <input type="checkbox" id="countInChk"> Count-in
-      <input type="number" id="countInBars" value="1" min="1" max="4" class="mini" aria-label="Compases de count-in"> compás(es)
-    </label>
-    <label class="chk">
-      <input type="checkbox" id="flashChk" checked> Flash en tiempo 1
-    </label>
-    <label class="chk">
-      <input type="checkbox" id="samplesChk" checked> Samples de batería
-    </label>
-  </section>
+  <!-- Sonido -->
+  <section class="card" aria-label="Sonido">
+    <h2 class="card-title">Sonido</h2>
+    <div class="controls">
+      <div class="cg">
+        <label for="sonido">Timbre</label>
+        <select id="sonido">
+          <option value="click">Clic digital</option>
+          <option value="madera">Madera (clave)</option>
+          <option value="bombo">Bombo</option>
+          <option value="platillo">Platillo (HH)</option>
+          <option value="redoblante">Redoblante</option>
+        </select>
+      </div>
+      <div class="cg">
+        <label for="volumen">Volumen</label>
+        <input type="range" id="volumen" min="0" max="1" step="0.01" value="0.8" aria-label="Volumen">
+      </div>
+    </div>
 
-  <!-- Acentos -->
-  <section class="accents" aria-label="Acentos por pulso">
-    <span class="sec-label">Acentos <span class="sec-hint">clic para alternar fuerte · normal · silencio</span></span>
-    <div class="acc-grid" id="accentGrid" role="group" aria-label="Rejilla de acentos"></div>
+    <div class="toggles">
+      <label class="switch">
+        <input type="checkbox" id="countInChk">
+        <span class="track"></span>
+        <span class="sw-text">Count-in
+          <input type="number" id="countInBars" value="1" min="1" max="4" class="mini" aria-label="Compases de count-in"> compás(es)
+        </span>
+      </label>
+      <label class="switch">
+        <input type="checkbox" id="flashChk" checked>
+        <span class="track"></span>
+        <span class="sw-text">Flash en el tiempo 1</span>
+      </label>
+      <label class="switch">
+        <input type="checkbox" id="samplesChk" checked>
+        <span class="track"></span>
+        <span class="sw-text">Samples de batería</span>
+      </label>
+    </div>
   </section>
 
   <!-- Práctica -->
-  <section class="practice" aria-label="Herramientas de práctica">
-    <span class="sec-label">Práctica</span>
+  <details class="card fold" aria-label="Herramientas de práctica">
+    <summary class="card-title">Práctica <svg class="ic chev"><use href="#i-chev"/></svg></summary>
 
     <div class="prow">
-      <label class="chk">
-        <input type="checkbox" id="gapChk"> Gap click
+      <label class="switch">
+        <input type="checkbox" id="gapChk">
+        <span class="track"></span>
+        <span class="sw-text">Gap click</span>
       </label>
       <span class="pfields">
         suenan <input type="number" id="gapPlay" value="2" min="1" max="32" class="mini" aria-label="Compases que suenan">
@@ -137,8 +203,10 @@
     </div>
 
     <div class="prow">
-      <label class="chk">
-        <input type="checkbox" id="rampChk"> Tempo progresivo
+      <label class="switch">
+        <input type="checkbox" id="rampChk">
+        <span class="track"></span>
+        <span class="sw-text">Tempo progresivo</span>
       </label>
       <span class="pfields">
         cada <input type="number" id="rampBars" value="4" min="1" max="64" class="mini" aria-label="Cada cuántos compases">
@@ -148,11 +216,11 @@
     </div>
 
     <p class="subtext">El gap click mantiene la cuenta en silencio: es el mejor test de estabilidad rítmica.</p>
-  </section>
+  </details>
 
   <!-- Grooves -->
-  <section class="tracks" aria-label="Pistas de batería">
-    <span class="sec-label">Pista de batería</span>
+  <details class="card fold" aria-label="Pistas de batería">
+    <summary class="card-title">Pista de batería <svg class="ic chev"><use href="#i-chev"/></svg></summary>
     <div class="pat-buttons" id="patternButtons" role="group" aria-label="Seleccionar patrón">
       <button class="pat-btn sel" data-pattern="off">Sin pista</button>
       <button class="pat-btn" data-pattern="groove1">Groove 4/4</button>
@@ -166,34 +234,15 @@
       <button class="pat-btn" data-pattern="odd78">Impar 7/8</button>
     </div>
     <p class="subtext" id="patternNotice">Pista apagada.</p>
-  </section>
+  </details>
 
-  <!-- Visual -->
-  <section class="visual" aria-label="Visualización del metrónomo">
-    <div class="pendulum" aria-hidden="true">
-      <div class="arm" id="pendulumArm">
-        <div class="weight"></div>
-      </div>
-    </div>
-    <div class="lights-wrap">
-      <div class="beat-lights" id="beatLights" aria-label="Indicadores de pulso" role="group"></div>
-      <div class="bar-counter">compás <b id="barCounter">–</b></div>
-    </div>
-  </section>
-
-  <!-- Main Actions -->
-  <section class="main-actions">
-    <button id="toggleBtn" class="btn primary" aria-label="Iniciar o detener el metrónomo">▶ Iniciar</button>
-    <button id="fsBtn" class="btn ghost" title="Modo pantalla completa"
-            aria-label="Abrir modo pantalla completa">⛶</button>
-    <button id="resetBtn" class="btn ghost" title="Reiniciar">↺</button>
-  </section>
-
-  <p class="hints">Espacio: Iniciar/Detener · ↑↓: BPM ±1 · Shift+↑↓: ±5 · T: Tap · F: Pantalla completa</p>
+  <p class="hints">
+    <kbd>Espacio</kbd> iniciar/detener · <kbd>↑</kbd><kbd>↓</kbd> ±1 · <kbd>Shift</kbd>+<kbd>↑</kbd><kbd>↓</kbd> ±5 · <kbd>T</kbd> tap · <kbd>F</kbd> pantalla completa
+  </p>
 
   <footer>
-    <p>© 2025 Musicala · Todos los derechos reservados
-       <span class="build" id="buildTag">v4</span></p>
+    <p>© 2025 Musicala · Escuela de Artes
+       <span class="build" id="buildTag">v5</span></p>
   </footer>
 </div>
 
@@ -203,7 +252,9 @@
   <div class="fs-top">
     <span class="fs-chip" id="fsMeter">4/4</span>
     <span class="fs-chip" id="fsTempo">Moderato</span>
-    <button class="fs-x" id="fsExit" aria-label="Salir de pantalla completa">✕</button>
+    <button class="fs-x" id="fsExit" aria-label="Salir de pantalla completa">
+      <svg class="ic"><use href="#i-close"/></svg>
+    </button>
   </div>
 
   <div class="fs-stage">
@@ -225,7 +276,7 @@
            class="fs-slider" aria-label="BPM en pantalla completa">
 
     <div class="fs-actions">
-      <button class="btn primary" id="fsToggle">▶ Iniciar</button>
+      <button class="btn primary" id="fsToggle">Iniciar</button>
       <button class="tap-btn" id="fsTap" aria-label="Tap tempo">TAP</button>
       <span class="fs-bar">compás <b id="fsBar">–</b></span>
     </div>

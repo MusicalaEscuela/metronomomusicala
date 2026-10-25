@@ -668,7 +668,7 @@ function closeBig() {
 }
 
 function syncFsToggle() {
-  $fsToggle.textContent = isPlaying ? '■ Detener' : '▶ Iniciar';
+  $fsToggle.textContent = isPlaying ? 'Detener' : 'Iniciar';
   $fsToggle.classList.toggle('stop', isPlaying);
 }
 
@@ -932,7 +932,7 @@ function startMetronome() {
   countInLeft   = $countInChk.checked ? intOf($countInBars, 1, 1, 4) : 0;
   tempoRampBase = $rampChk.checked ? getBPM() : null;
   isPlaying = true;
-  $toggleBtn.textContent = '■ Detener';
+  $toggleBtn.querySelector('.play-label').textContent = 'Detener';
   $toggleBtn.classList.add('stop');
   $barCounter.textContent = '1';
   $srStatus.textContent = `Metrónomo iniciado a ${getBPM()} BPM en ${getMeterId()}`;
@@ -945,7 +945,7 @@ function stopMetronome() {
   isPlaying   = false;
   countInLeft = 0;
   showCountBeat(-1);
-  $toggleBtn.textContent = '▶ Iniciar';
+  $toggleBtn.querySelector('.play-label').textContent = 'Iniciar';
   $toggleBtn.classList.remove('stop');
   $srStatus.textContent = 'Metrónomo detenido';
   setActiveLed(-1);
@@ -1071,7 +1071,7 @@ function handleTap() {
 // ──────────────────────────────────────────────
 function applyTheme(t) {
   document.documentElement.setAttribute('data-theme', t);
-  $themeToggle.textContent = t === 'dark' ? '☀️' : '🌙';
+  $themeToggle.setAttribute('aria-label', t === 'dark' ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro');
   try { localStorage.setItem('metro-theme', t); } catch {}
 }
 function toggleTheme() {

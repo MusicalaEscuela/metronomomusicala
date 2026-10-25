@@ -10,7 +10,7 @@
    servía el index.html viejo para siempre: había que entrar en incógnito para
    ver los cambios. */
 
-const VERSION = 'v4';
+const VERSION = 'v5';
 const CACHE   = 'metronomo-musicala-' + VERSION;
 
 // Se precargan los medios pesados; el código se toma de la red al vuelo.
