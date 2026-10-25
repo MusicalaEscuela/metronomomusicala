@@ -280,7 +280,7 @@ function buildSubdivOptions() {
     $subdiv.appendChild(el);
   }
   $subdiv.value = opts.some(o => o.v === prev) ? prev
-                : (getMeter().type === 'irregular' ? 't6' : 'p2');
+                : 'p1';
 }
 
 function buildGroupingOptions() {
@@ -980,7 +980,7 @@ function resetAll() {
   setPatternUI('off');
   accents = [];
   buildAll();
-  $subdiv.value = 'p2';
+  $subdiv.value = 'p1';
   rebuildTiming();
   updateSliderFills();
 }
@@ -1158,7 +1158,7 @@ window.addEventListener('keydown', e => {
   try { saved = localStorage.getItem('metro-theme') || 'dark'; } catch {}
   applyTheme(saved);
   buildAll();
-  $subdiv.value = 'p2';
+  $subdiv.value = 'p1';
   rebuildTiming();
   masterGain.gain.value = getVol();
   updateSliderFills();
