@@ -485,6 +485,8 @@ const PATTERNS = {
     parts: { bombo:[0,4], redoblante:[2,6], platillo:[0,2,4,6] } },
   bossa: { meters: ['4/4'], grid: 8,
     parts: { bombo:[0,3,5], redoblante:[2,4], platillo:[0,2,4,6] } },
+  reggaeton: { meters: ['4/4'], grid: 8,
+    parts: { bombo:[0,2,4,6], redoblante:[3,6], platillo:[1,3,5,7] } },
   waltz34: { meters: ['3/4'], grid: 6,
     parts: { bombo:[0], redoblante:[2,4], platillo:[0,2,4] } },
   balada68: { meters: ['6/8'], grid: 6,
@@ -500,7 +502,7 @@ const PATTERNS = {
 };
 
 const PATTERN_METER = {
-  groove1:'4/4', funk:'4/4', rock:'4/4', bossa:'4/4', waltz34:'3/4',
+  groove1:'4/4', funk:'4/4', rock:'4/4', bossa:'4/4', reggaeton:'4/4', waltz34:'3/4',
   balada68:'6/8', rock128:'12/8', shuffle12:'12/8', odd78:'7/8',
 };
 
