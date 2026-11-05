@@ -474,7 +474,7 @@ function playClickSound(t, level) {
 }
 
 // ──────────────────────────────────────────────
-// Patrones de batería (rejilla en corcheas)
+// Patrones de batería (la rejilla divide el compás en pasos iguales)
 // ──────────────────────────────────────────────
 const PATTERNS = {
   groove1: { meters: ['4/4'], grid: 8,
@@ -485,8 +485,8 @@ const PATTERNS = {
     parts: { bombo:[0,4], redoblante:[2,6], platillo:[0,2,4,6] } },
   bossa: { meters: ['4/4'], grid: 8,
     parts: { bombo:[0,3,5], redoblante:[2,4], platillo:[0,2,4,6] } },
-  reggaeton: { meters: ['4/4'], grid: 8,
-    parts: { bombo:[0,2,4,6], redoblante:[3,6], platillo:[1,3,5,7] } },
+  reggaeton: { meters: ['4/4'], grid: 16,
+    parts: { bombo:[0,4,8,12], redoblante:[3,6,11,14], platillo:[0,2,4,6,8,10,12,14] } },
   waltz34: { meters: ['3/4'], grid: 6,
     parts: { bombo:[0], redoblante:[2,4], platillo:[0,2,4] } },
   balada68: { meters: ['6/8'], grid: 6,
@@ -514,9 +514,10 @@ function buildPatternTicks() {
   const pat = PATTERNS[activePattern];
   if (!pat || !pat.meters.includes(getMeterId())) { muteWhenIncompat = true; return null; }
   muteWhenIncompat = false;
+  const ticksPerStep = barPlan.ticks / pat.grid;
   const m = {};
   for (const part of Object.keys(pat.parts))
-    m[part] = new Set(pat.parts[part].map(cell => cell * EIGHTH));
+    m[part] = new Set(pat.parts[part].map(cell => cell * ticksPerStep));
   return m;
 }
 
